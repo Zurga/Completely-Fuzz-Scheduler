@@ -9,10 +9,9 @@ time_slice = 45
 num_timeslices = 8
 tree = bintrees.RBTree()
 exit = False
-path = '/home/jim/.tasks.json'
 
 
-class TaskTree:
+class ProcessTree:
     def __init__(self, tasks=None):
         self.tree = bintrees.RBTree()
         self.stats = tasks.get('stats')
@@ -110,56 +109,3 @@ def get_tasks():
     with open(path, 'r') as fle:
         tasks = json.load(fle)
     return tasks
-
-
-def main(argv):
-    try:
-        opts, args = getopt.getopt(argv, 'ha:d:m:', ['task=', 'task='])
-    except getopt.GetoptError:
-        print('no arguments given')
-        sys.exit(2)
-    tasks = get_tasks()
-    tasklist = TaskTree(tasks=tasks)
-
-    for opt, arg in opts:
-        if opt in ('-a', '--add-task'):
-            print('adding taxs')
-            label, nice, time = arg.split(',')
-            tasklist.add_tasks({'label': label, 'nice': nice, 'time': time})
-
-        elif opt in ('-d', '--delete-task'):
-            tasklist.remove_task(tasklist[arg])
-
-        elif opt in ('-m', '--modify-task'):
-            tasklist.find_task_by_label()
-
-        elif opt in ('-s', '--start-task'):
-            key, task = tasklist.find_task_by_label(arg)
-            if not task.start_time:
-                tasklist.start_task(task)
-                print('You are doing %s now!' % (task.label))
-            else:
-                print('Task %s has already started' % (task.label))
-
-        elif opt in ('-p', '--pause-task'):
-            key, task = tasklist.find_task_by_label(arg)
-            if task.start_time and not task.paused:
-                tasklist.pause_task(task)
-            else:
-                print('Task %s has not started or is paused already' % (task.label))
-
-        elif opt in ('-D', '--task-done'):
-            key, task = tasklist.find_task_by_label(arg)
-            if task.start_time and task.paused:
-                tasklist.remove_task(task)
-                tasklist.stats['done'] += 1
-            else:
-                print('Task %s has not started' % (task.label))
-
-    print(tasklist)
-    tasklist.save(path)
-    return tasklist
-
-
-if __name__ == '__main__':
-    tasklist = main(sys.argv[1:])
