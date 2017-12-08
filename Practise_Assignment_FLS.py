@@ -58,14 +58,13 @@
 
 # In[2]:
 
-from __future__ import division
 import math
 import numpy as np
 from collections import defaultdict, Counter
 import matplotlib.pyplot as plt
 
 
-# In[7]:
+# In[3]:
 
 class TriangularMF:
     """Triangular fuzzy logic membership function class."""
@@ -146,7 +145,7 @@ print(trapezoidal_mf.calculate_membership(3.9))
 # 
 # <img src="https://i.imgur.com/7iIyCco.png"></img>
 
-# In[11]:
+# In[6]:
 
 class Variable(object):
     """General class for variables in an FLS."""
@@ -183,7 +182,7 @@ class Output(Variable):
         self.type = "output"
 
 
-# In[12]:
+# In[7]:
 
 # Input variable for your income
 # Your code here
@@ -210,7 +209,7 @@ inputs = [income, quality]
 output = money
 
 
-# In[14]:
+# In[8]:
 
 # Test your implementation by running the following statements
 # Enter your answers in the Google form to check them, round to two decimals
@@ -243,7 +242,7 @@ print(output.calculate_memberships(222))
 # 
 # Complete the *calculate_firing_strength()*, that should function and check your answers by running the test statements.
 
-# In[21]:
+# In[9]:
 
 class Rule:
     """Fuzzy rule class, initialized with an antecedent (list of strings),
@@ -263,7 +262,7 @@ class Rule:
         return self.operation([inputs[i].calculate_memberships(datapoint[i])[self.antecedent[i]] for i in range(len(inputs))])
 
 
-# In[22]:
+# In[10]:
 
 # Test your implementation by checking the following statements
 # Enter your answers in the Google form to check them, round to two decimals
@@ -302,7 +301,7 @@ print(rule2.calculate_firing_strength([700, 3], inputs))
 # 
 # Check the correctness of your function with the testing statements.
 
-# In[23]:
+# In[14]:
 
 from collections import Counter
 
@@ -317,12 +316,12 @@ class Rulebase:
         for i, rule in enumerate(self.rules):
             fs = rule.calculate_firing_strength(datapoint, inputs)
             consequent = rule.consequent
-            if not result.has_key(consequent) or fs > result[consequent]:
+            if not consequent in result or fs > result[consequent]:
                 result[consequent] = fs
         return result
 
 
-# In[24]:
+# In[15]:
 
 # Add the rules listed in the question description
 # Your code here
@@ -339,7 +338,7 @@ rules = [Rule(1, ['Low', 'Amazing'], 'and', 'Low'),
 rulebase = Rulebase(rules)
 
 
-# In[25]:
+# In[16]:
 
 # Test your implementation of calculate_firing_strengths()
 # Enter your answers in the Google form to check them, round to two decimals
@@ -382,14 +381,14 @@ print(rulebase.calculate_firing_strengths(datapoint, inputs))
 #     - Second we discretize the area between start and end into 201 points (thus representing the area in 200 bins)
 # 3. Applying two defuzzification methods: implement smallest of max (<b>som</b>) and largest of max (<b>lom</b>).
 
-# In[26]:
+# In[51]:
 
 class Reasoner:
     def __init__(self, rulebase, inputs, output, n_points, defuzzification):
         self.rulebase = rulebase
         self.inputs = inputs
         self.output = output
-        self.discretize = n_points
+        self.discretise = n_points
         self.defuzzification = defuzzification
 
     def inference(self, datapoint):
@@ -398,9 +397,7 @@ class Reasoner:
         # looks like: {"low":0.5, "medium":0.25, "high":0}
         
         # Your code here
-        #raise NotImplementedError
         firing_strengths = self.rulebase.calculate_firing_strengths(datapoint, self.inputs)
-        print(firing_strengths)
 
         # 2. Aggregate and discretize
         # looks like: [(0.0, 1), (1.2437810945273631, 1), (2.4875621890547261, 1), (3.7313432835820892, 1), ...]
@@ -415,28 +412,30 @@ class Reasoner:
         
         # First find where the aggregated area starts and ends
         # Your code here
-        # raise NotImplementedError
-        area = np.linspace(min([mf.start for mf in self.output.mfs]), max([mf.end for mf in self.output.mfs]), self.discretize)
-        
+        area = np.linspace(self.output.range[0], self.output.range[1], self.discretise)
         
         # Second discretize this area and aggragate
         # Your code here
-        # raise NotImplementedError
         pts = []
-#        for pt in area:
-#            pts.append((pt, max([min(firing_strengths[mf.name], mf.calculate_membership(pt)) for mf in self.output.mfs])))
-        
+        for pt in area:
+            pts.append((pt, max([min(firing_strengths[mf.name], mf.calculate_membership(pt)) for mf in self.output.mfs])))
 
         return pts
 
     def defuzzify(self, input_value_pairs):
         # Your code here
-        # raise NotImplementedError
         if self.defuzzification == 'som':
+            max_val = max(input_value_pairs, key=lambda x: x[1])
+            return max_val[0]
+
+        if self.defuzzification == 'lom':
+            max_val = max(reversed(input_value_pairs), key=lambda x: x[1])
+            return max_val[0]
+
         return crisp_value
 
 
-# In[27]:
+# In[52]:
 
 # Test your implementation of the fuzzy inference
 # Enter your answers in the Google form to check them, round to two decimals
@@ -445,7 +444,7 @@ thinker = Reasoner(rulebase, inputs, output, 201, "som")
 datapoint = [100, 1]
 print(round(thinker.inference(datapoint)))
 
-thinker = Reasoner(rulebase, inputs, output, 101, "lom")
+thinker = Reasoner(rulebase, inputs, output, 101, "som")
 datapoint = [550, 4.5]
 print(round(thinker.inference(datapoint)))
 
@@ -464,9 +463,4 @@ print(round(thinker.inference(datapoint)))
 thinker = Reasoner(rulebase, inputs, output, 201, "lom")
 datapoint = [900, 6.5]
 print(round(thinker.inference(datapoint)))
-
-
-# In[ ]:
-
-
 
