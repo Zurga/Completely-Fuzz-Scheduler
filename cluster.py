@@ -8,7 +8,7 @@ class NaNException(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-class FuzzyKmodes(object):
+class FuzzyKmodesFuzzyCentroids(object):
     def __init__(self, X, y=None, k=2, m=1.5, n_iter=10, error=0.00005):
         self.X = X
         self.y = y
@@ -78,8 +78,12 @@ class FuzzyKmodes(object):
         summed = sum(r[1] for r in row)
         return [(value, x / summed) for value, x in row]
 
-    def cluster(self):
-        clusters = self.init(self.X, self.k)
+    def fit(self, init=None, memberships=False):
+        if not init:
+            clusters = self.init(self.X, self.k)
+        else:
+            clusters = init
+
         clusters = self.check_normal(clusters, -2)
         u = [[self.membership(row, cluster, clusters) for row in self.X.values]
             for cluster in clusters]
@@ -87,7 +91,8 @@ class FuzzyKmodes(object):
         clusters = self.check_normal(clusters, -1)
 
         self.iteration = 0
-        while self.iteration < self.n_iter or u_error > self.error:
+        u_error = 1
+        while self.iteration < self.n_iter and u_error > self.error:
             try:
                 new_u = [[self.membership(x, cluster, clusters) for x in
                         self.X.values]
@@ -99,11 +104,15 @@ class FuzzyKmodes(object):
                 # print(clusters)
                 u = new_u
                 clusters = clusters_new
-                self.iteration += 1
             except NaNException:
-                pass
+                print('nan')
+                break
+            finally:
+                self.iteration += 1
         self.u = u
         self.clusters = clusters
+        if memberships:
+            return self.cluster_membership()
 
     def cluster_membership(self):
         cluster_membership = {i: list() for i in range(self.k)}
