@@ -138,3 +138,13 @@ class FuzzyKmodesFuzzyCentroids(object):
                 # Filter out the NaN values.
                 plt.hist([v for v in vals if v ==v])
         plt.show()
+
+
+
+class FuzzyKmodes(FuzzyKmodesFuzzyCentroids):
+    def __init__(self, X, y=None, k=2, m=1.5, n_iter=10, error=0.00005):
+        super().__init__(X, y=y, k=k, m=m, n_iter=n_iter, error=error)
+
+    def dissimilarity(self, fuzzy_set, value):
+        return sum(0 if term == value else 1
+                for term, confidence in fuzzy_set)
